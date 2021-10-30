@@ -6,7 +6,6 @@ class ConvModule:
     def __init__(self, *, filters, kernel_size, strides, name, relu=True):
         self.layers = []
         if filters is not None:
-            assert kernel_size == 1
             self.layers.append(tf.keras.layers.Conv2D(
                 filters=filters,
                 kernel_size=kernel_size,
