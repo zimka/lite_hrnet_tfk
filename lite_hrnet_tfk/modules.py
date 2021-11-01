@@ -237,4 +237,18 @@ class HrNetHeadV2:
         return y
 
 
+class HrNetHeadV1:
+    def __init__(self, *, scale_idx: int, output_channels: int, name):
+        self.conv = tf.keras.layers.Conv2D(
+            filters=output_channels, kernel_size=1,
+            strides=1, use_bias=True, name=f"{name}.p",
+            padding='same'
+        )
+        self.scale_idx = scale_idx
+
+    def __call__(self, x_list):
+        x = x_list[self.scale_idx]
+        y = self.conv(x)
+        return y
+
 

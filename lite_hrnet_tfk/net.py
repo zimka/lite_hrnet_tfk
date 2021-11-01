@@ -1,6 +1,6 @@
 import tensorflow as tf
 
-from lite_hrnet_tfk.modules import StemModule, LiteNaiveHrModule, TransitionModule, HrNetHeadV2
+from lite_hrnet_tfk.modules import StemModule, LiteNaiveHrModule, TransitionModule, HrNetHeadV2, HrNetHeadV1
 from lite_hrnet_tfk.config import LiteHrnetConfig
 
 
@@ -36,9 +36,10 @@ def lite_hr_net(x=tf.keras.layers.Input((256, 256, 3)), *, config:LiteHrnetConfi
     if config.head.version == 'v0':
         outputs = x
     elif config.head.version == 'v1':
-        outputs = x[config.head.v1_scale_idx]
+        head = HrNetHeadV1(scale_idx=config.head.v1_scale_idx, output_channels=config.head.out_channels, name=f"{config.name}.head")
+        outputs = head(x)
     elif config.head.version == 'v2':
-        head = HrNetHeadV2(num_scales=len(config.stages), output_channels=config.head.v2_out_channels, name=f"{config.name}.head")
+        head = HrNetHeadV2(num_scales=len(config.stages), output_channels=config.head.out_channels, name=f"{config.name}.head")
         outputs = head(x)
     else:
         raise NotImplementedError()
@@ -51,6 +52,8 @@ def lite_hr_net(x=tf.keras.layers.Input((256, 256, 3)), *, config:LiteHrnetConfi
 class LiteHrNet(tf.keras.models.Model):
     def __init__(self, config: LiteHrnetConfig):
         super().__init__()
+        raise NotImplementedError("Currently broken")
+
         self.stem_m = StemModule(
             stem_channels=config.stem.stem_channels,
             out_channels=config.stem.out_channels,
@@ -89,7 +92,6 @@ class LiteHrNet(tf.keras.models.Model):
         if config.head.version != 'v2':
             raise NotImplementedError()
 
-        head = HrNetHeadV2(num_scales=len(config.stages), output_channels=config.head.v2_out_channels, name=f"{config.name}.head")
         if config.head.version != 'v2':
             raise NotImplementedError()
         self.head = HrNetHeadV2(num_scales=len(config.stages), output_channels=config.head_output_channels, name=f"{config.name}.head")

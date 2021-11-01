@@ -20,14 +20,12 @@ class StemSpec:
 class HeadSpec:
     _HEAD_VERSIONS = (
         'v0', # None, just forward all scales
-        'v1', # Forward scale with the highest resolution
+        'v1', # Select v1_scale_idx scale and apply conv 1x1
         'v2', # Upsample, concat and apply conv 1x1
-        'v2p'
     )
-    v2_out_channels: int = 32
+    out_channels: int = 32
     version: str = 'v2'
     v1_scale_idx: int = 0
-
 
 
 @dataclass
