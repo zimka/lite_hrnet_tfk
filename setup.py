@@ -7,14 +7,18 @@ os.chdir(os.path.normpath(os.path.join(os.path.abspath(__file__), os.pardir)))
 
 setup(
     name='lite_hrnet_tfk',
-    version='0.1.0',
+    version='0.2.0',
     python_requires='>=3.7.0',
     packages=[''],
-    description='Task1 for ABBYY CV DL course',
+    description='Lite-HRNet tensorflow.keras implementation',
     url='',
     author='Boris Zimka',
     author_email='boris.zimka@abbyy.com',
-    install_requires=['numpy', 'pytest'],
+    install_requires=[
+        'tensorflow',
+        'numpy',
+        'pytest'
+    ],
     classifiers=[
         'Development Status :: 3 - Alpha',
         'Intended Audience :: End Users/Desktop',

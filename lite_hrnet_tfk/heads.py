@@ -1,0 +1,106 @@
+import tensorflow as tf
+from lite_hrnet_tfk.layers import ConvBlockLayer
+
+
+class HrNetHeadV2(tf.keras.models.Model):
+    def __init__(self, *, num_scales:int, out_channels: int, name):
+        super().__init__(self, name=name)
+        self.num_scales = num_scales
+        self.out_channels = out_channels
+
+        self.conv = tf.keras.layers.Conv2D(
+            filters=out_channels, kernel_size=1,
+            strides=1, use_bias=True, name=f"{name}.p",
+            padding='same'
+        )
+        self.upsamplers = [lambda x: x]
+        for n in range(1, num_scales):
+            self.upsamplers.append(
+                tf.keras.layers.UpSampling2D(2**n, interpolation='bilinear')
+            )
+        self.concat = tf.keras.layers.Concatenate()
+
+    def call(self, x_list):
+        assert len(x_list) == len(self.upsamplers), (len(x_list), len(self.upsamplers))
+        y_list = []
+        for x, up in zip(x_list, self.upsamplers):
+            y_list.append(up(x))
+        y = self.concat(y_list)
+        y = self.conv(y)
+        return y
+
+
+class HrNetHeadV1(tf.keras.models.Model):
+    def __init__(self, *, scale_idx: int, out_channels: int, name):
+        super().__init__(self, name=name)
+
+        self.scale_idx = scale_idx
+        self.conv = tf.keras.layers.Conv2D(
+            filters=out_channels, kernel_size=1,
+            strides=1, use_bias=True, name=f"{name}.p",
+            padding='same'
+        )
+
+    def call(self, x_list):
+        x = x_list[self.scale_idx]
+        y = self.conv(x)
+        return y
+
+
+class IterativeHead(tf.keras.models.Model):
+    """
+    https://github.com/HRNet/Lite-HRNet/blob/hrnet/models/backbones/litehrnet.py#L272
+    """
+    def __init__(self, out_channels, name):
+        super().__init__(name=name)
+        self.out_channels = out_channels
+
+    def build(self, input_shape):
+        num_channels_list = [sh[-1] for sh in input_shape]
+        self.projects = []
+        for scale_idx, chan_dst in enumerate(num_channels_list):
+            if scale_idx != 0:
+                chan_dst = num_channels_list[scale_idx - 1]
+            self.projects.append(
+                self._build_projection(chan_dst, name=f"{self.name}.proj{scale_idx}")
+            )
+
+        self.upsamplers = []
+        for n in range(len(input_shape) - 1):
+            self.upsamplers.append(
+                tf.keras.layers.UpSampling2D(2, interpolation='bilinear', name=f"{self.name}.up{n}")
+            )
+        self.upsamplers.append(lambda x: x)
+
+        self.final_proj = tf.keras.layers.Conv2D(
+            filters=self.out_channels, kernel_size=1,
+            strides=1, use_bias=True, name=f"{self.name}.out",
+            padding='same'
+        )
+
+    def _build_projection(self, chan_dst, name):
+        """
+        Separable convolution with intermediate batch norms
+        """
+        layers = []
+        layers += ConvBlockLayer(filters=None, kernel_size=3, strides=1, name=f"{name}.d", relu=False).layers
+        layers += ConvBlockLayer(filters=chan_dst, kernel_size=1, strides=1, name=f"{name}.p", relu=False).layers
+        return tf.keras.models.Sequential(layers, name=name)
+
+    def call(self, x_list):
+        """
+        x_list: [
+            S0[H, W, C], S1[ H/ 2, W/2, 2*C], S2[H/4, W/4, 4*C], S3[H/8, W/8, 8*C]
+        ]
+        """
+        assert len(x_list) == len(self.upsamplers) == len(self.projects)
+        last_x = None
+        for idx in range(len(x_list)-1, -1, -1):
+            s = x_list[idx]
+            if last_x is not None:
+                last_x = self.upsamplers[idx](last_x)
+                s = s + last_x
+            s = self.projects[idx](s)
+            last_x = s
+        y = self.final_proj(last_x)
+        return y
