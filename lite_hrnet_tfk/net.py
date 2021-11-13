@@ -6,7 +6,7 @@ from lite_hrnet_tfk.heads import HrNetHeadV2, HrNetHeadV1, IterativeHead
 from lite_hrnet_tfk.config import LiteHrnetConfig
 
 
-class _LiteHrnetImpl:
+class LiteHrnet(tf.keras.models.Model):
     def __init__(self, *, config: LiteHrnetConfig):
         super().__init__()
         self._build_backbone(config)
@@ -19,12 +19,7 @@ class _LiteHrnetImpl:
             name=f"{config.name}.stem"
         )
         self.stages = []
-        self.trans = []
         for spec_idx, spec in enumerate(config.stages):
-            self.trans.append(TransitionModule(
-                num_channels_list=spec.num_channels_list,
-                name=f"{config.name}.trans.{spec_idx}"
-            ))
             self.stages.append(StageModule(
                 num_modules=spec.num_modules,
                 num_blocks=spec.num_blocks,
@@ -41,40 +36,27 @@ class _LiteHrnetImpl:
             self.head = HrNetHeadV1(
                 scale_idx=config.head.v1_scale_idx,
                 out_channels=config.head.out_channels,
-                name=f"{config.name}.head_v1"
+                name=f"{config.name}.head"
             )
         elif config.head.version == 'v2':
             self.head = HrNetHeadV2(
                 num_scales=len(config.stages) + 1,
                 out_channels=config.head.out_channels,
-                name=f"{config.name}.head_v2"
+                name=f"{config.name}.head"
             )
         elif config.head.version == 'vi':
             self.head = IterativeHead(
                 out_channels=config.head.out_channels,
-                name=f"{config.name}.head_vi"
+                name=f"{config.name}.head"
             )
         else:
             raise NotImplementedError()
 
     def call(self, x):
+        if isinstance(x, np.ndarray):
+            x = tf.convert_to_tensor(x)
         x = [self.stem(x)]
-        assert len(self.stages) == len(self.trans)
-        for tran, stage in zip(self.trans, self.stages):
-            x = tran(x)
+        for stage in self.stages:
             x = stage(x)
         x = self.head(x)
         return x
-
-
-def lite_hrnet(x=tf.keras.layers.Input((256, 256, 3)), *, config:LiteHrnetConfig):
-    impl = _LiteHrnetImpl(config=config)
-    y = impl.call(x)
-    return tf.keras.models.Model(inputs=x, outputs=y)
-
-
-class LiteHrnet(_LiteHrnetImpl, tf.keras.models.Model):
-    def call(self, x):
-        if isinstance(x, np.ndarray):
-            x = tf.convert_to_tensor(x)
-        return super().call(x)

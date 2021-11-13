@@ -7,7 +7,6 @@ class StageSpec:
     num_modules: int
     num_blocks: int
     num_channels_list: List[int]
-    with_fuse: bool = True
 
 
 @dataclass
@@ -32,8 +31,8 @@ class HeadSpec:
 
 @dataclass
 class LiteHrnetConfig:
-    stages: List[StageSpec]
     stem: StemSpec
+    stages: List[StageSpec]
     head: HeadSpec
 
     name: str = "LiteHrNet"
@@ -46,12 +45,12 @@ class LiteHrnetConfig:
         head = HeadSpec()
         head.out_channels = out_channels
         return cls(
+            stem=StemSpec(),
             stages=[
                 StageSpec(num_modules=2, num_blocks=2, num_channels_list=(40, 80)),
                 StageSpec(num_modules=4, num_blocks=2, num_channels_list=(40, 80, 160)),
                 StageSpec(num_modules=2, num_blocks=2, num_channels_list=(40, 80, 160, 320)),
             ],
-            stem=StemSpec(),
             name="Naive18",
             head=head
         )
