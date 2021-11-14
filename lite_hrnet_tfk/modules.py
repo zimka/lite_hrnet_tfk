@@ -1,3 +1,8 @@
+"""
+Modules here mostly combine layers and other modules and do not require tensorflow api,
+but have more comples behavior (compared to layers).
+"""
+
 from typing import List, Tuple
 
 import numpy as np
@@ -35,7 +40,7 @@ class StemModule(_BaseModule):
     Input module in Lite-HRNet. Reduces HW 4 times.
     https://github.com/HRNet/Lite-HRNet/blob/hrnet/models/backbones/litehrnet.py#L164
     """
-    def __init__(self, stem_channels=32, out_channels=32, name="stem"):
+    def __init__(self, stem_channels=32, out_channels=32, name="StemModule"):
         super().__init__(self, name=name)
 
         self.conv1 = ConvBlockLayer(filters=stem_channels, kernel_size=3, strides=2, name=f"{name}.conv1")
@@ -66,15 +71,16 @@ class ShuffleModule(_BaseModule):
     Basic block in LiteNaiveHrModule.
     https://github.com/HRNet/Lite-HRNet/blob/hrnet/models/backbones/litehrnet.py#L327
     """
-    def __init__(self, *, filters: int, strides: int, name: str):
+    def __init__(self, *, filters: int, strides: int = 1, name: str = "ShuffleModule"):
         # TODO: branch1
         super().__init__(self, name=name)
 
         if strides != 1:
+            # all original lite-hrnet configs use stride=1 here
             raise NotImplementedError()
         self.split = ChannelSplitLayer(n_splits=2, name=f"{name}.split")
         # the following works only when in_channels == out_channels,
-        # which should be always true if module is according to paper
+        # which should be always true if module is used according to the paper
         self._filters = filters
         self.branch2 = [
             ConvBlockLayer(filters=filters // 2, kernel_size=1, strides=1, name=f"{name}branch2.0"),
@@ -100,7 +106,11 @@ class ShuffleModule(_BaseModule):
 
 
 class FusionModule(_BaseModule):
-    def __init__(self, *, branches_chan_list: List[int], name: str):
+    """
+    Fuses different scales in the end of Lite*HrModule.
+    https://github.com/HRNet/Lite-HRNet/blob/hrnet/models/backbones/litehrnet.py#L533
+    """
+    def __init__(self, *, branches_chan_list: List[int], name: str = "FusionModule"):
         super().__init__(self, name=name)
         self.to_from = list(list() for _ in branches_chan_list)
         # branch channels are sorted from the highest scale to the lowest
@@ -131,7 +141,6 @@ class FusionModule(_BaseModule):
         name = f"{self.name}.to_from.{i_dst}.{j_src}"
         if j_src > i_dst:
             # source feature map is smaller than destination -> upsample source
-            # https://github.com/HRNet/Lite-HRNet/blob/hrnet/models/backbones/litehrnet.py#L547
             return tf.keras.models.Sequential(
                 ConvBlockLayer(
                     filters=chan_dst, kernel_size=1, strides=1,
@@ -156,7 +165,11 @@ class FusionModule(_BaseModule):
 
 
 class LiteNaiveHrModule(_BaseModule):
-    def __init__(self, *, num_blocks, branches_chan_list, name):
+    """
+    Naive module, based on ShuffleModule.
+    https://github.com/HRNet/Lite-HRNet/blob/hrnet/models/backbones/litehrnet.py#L524
+    """
+    def __init__(self, *, num_blocks: int, branches_chan_list: List[int], name: str = "LiteNaiveHrModule"):
         super().__init__(self, name=name)
 
         self.branches = []
@@ -189,7 +202,12 @@ class LiteNaiveHrModule(_BaseModule):
 
 
 class TransitionModule(_BaseModule):
-    def __init__(self, *, num_channels_list: List[int], name: str):
+    """
+    Preprocess module which is used before each stage to
+    create new "fork".
+    https://github.com/HRNet/Lite-HRNet/blob/hrnet/models/backbones/litehrnet.py#L755
+    """
+    def __init__(self, *, num_channels_list: List[int], name: str = "TransitionModule"):
         super().__init__(self, name=name)
         self.num_channels_list = num_channels_list
 
@@ -197,7 +215,7 @@ class TransitionModule(_BaseModule):
         # in theory transition module could add more than one downscaled fork,
         # or not add any fork at all,
         # but in paper only N:(N+1) transitions are used, because
-        # transitions are used only at the beginning of the stage and
+        # transitions are placed only at the beginning of each stage and
         # every stage adds one and only one new branch.
         num_channels_list_src = [sh[-1] for sh in input_shape]
         num_channels_list_dst = self.num_channels_list
@@ -241,8 +259,13 @@ class TransitionModule(_BaseModule):
 
 
 class StageModule(_BaseModule):
+    """
+    Single stage of Lite-HRNet.
+    https://github.com/HRNet/Lite-HRNet/blob/hrnet/models/backbones/litehrnet.py#L823
+    Optionally builds transition module in addition to LiteHR*Modules.
+    """
     def __init__(self, *, num_modules: int, num_blocks: int, num_channels_list: List[int],
-        with_transition: bool = True, name):
+        with_transition: bool = True, name: str = "StageModule"):
         super().__init__(self, name=name)
         self.trans = None
         if with_transition:

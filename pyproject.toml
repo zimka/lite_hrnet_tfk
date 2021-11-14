@@ -1,7 +1,7 @@
 [tool.poetry]
 name = "lite_hrnet_tfk"
 version = "0.3.0"
-description = "Lite HRNet tensoflow.keras implementation"
+description = "tensoflow.keras implementation of Lite-HRNet"
 authors = ["Boris Zimka <zimka.b@ya.ru>"]
 license = "MIT"
 

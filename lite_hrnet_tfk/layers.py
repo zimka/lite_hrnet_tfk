@@ -1,3 +1,7 @@
+"""
+Layers here mostly use tensorflow api and either don't have trainable weights at all
+or use simple operations and have simple structure.
+"""
 from typing import Tuple
 
 import tensorflow as tf

@@ -1,3 +1,4 @@
+from typing import List
 import tensorflow as tf
 
 from lite_hrnet_tfk.layers import ConvBlockLayer
@@ -22,7 +23,8 @@ class HrNetHeadV2(_BaseModule):
             )
         self.concat = tf.keras.layers.Concatenate(name=f"{name}.concat")
 
-    def call(self, x_list):
+    def call(self, inputs: List[tf.Tensor]) -> tf.Tensor:
+        x_list = inputs
         assert len(x_list) == len(self.ups), (len(x_list), len(self.ups))
         y_list = []
         for x, up in zip(x_list, self.ups):
@@ -43,7 +45,7 @@ class HrNetHeadV1(_BaseModule):
             padding='same'
         )
 
-    def call(self, x_list):
+    def call(self, inputs: List[tf.Tensor]) -> tf.Tensor:
         x = x_list[self.scale_idx]
         y = self.conv(x)
         return y
@@ -90,12 +92,13 @@ class IterativeHead(_BaseModule):
         layers += ConvBlockLayer(filters=chan_dst, kernel_size=1, strides=1, name=f"{name}.1", relu=False).layers
         return tf.keras.models.Sequential(layers, name=name)
 
-    def call(self, x_list):
+    def call(self, inputs: List[tf.Tensor]) -> tf.Tensor:
         """
         x_list: [
             S0[H, W, C], S1[ H/ 2, W/2, 2*C], S2[H/4, W/4, 4*C], S3[H/8, W/8, 8*C]
         ]
         """
+        x_list = inputs
         assert len(x_list) == len(self.ups) == len(self.projects)
         last_x = None
         for idx in range(len(x_list)-1, -1, -1):
