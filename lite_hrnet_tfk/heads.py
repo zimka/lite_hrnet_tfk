@@ -2,10 +2,10 @@ from typing import List
 import tensorflow as tf
 
 from lite_hrnet_tfk.layers import ConvBlockLayer
-from lite_hrnet_tfk.modules import _BaseModule
+from lite_hrnet_tfk.modules import BaseModule
 
 
-class HrNetHeadV2(_BaseModule):
+class HrNetHeadV2(BaseModule):
     def __init__(self, *, num_scales:int, out_channels: int, name: str):
         super().__init__(self, name=name)
         self.num_scales = num_scales
@@ -34,7 +34,7 @@ class HrNetHeadV2(_BaseModule):
         return y
 
 
-class HrNetHeadV1(_BaseModule):
+class HrNetHeadV1(BaseModule):
     def __init__(self, *, scale_idx: int, out_channels: int, name: str):
         super().__init__(self, name=name)
 
@@ -51,7 +51,7 @@ class HrNetHeadV1(_BaseModule):
         return y
 
 
-class IterativeHead(_BaseModule):
+class IterativeHead(BaseModule):
     """
     https://github.com/HRNet/Lite-HRNet/blob/hrnet/models/backbones/litehrnet.py#L272
     """

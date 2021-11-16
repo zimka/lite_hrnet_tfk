@@ -53,7 +53,7 @@ def test_shuffle(call, n_groups, chans=24, hw=5, batch=2):
 @pytest.mark.parametrize("call", [_functional_model_call, _subclass_model_call])
 @pytest.mark.parametrize("n_splits", [2, 6])
 def test_channel_split(call, n_splits, chans=24, hw=5, batch=2):
-    layer = layers.ChannelSplitLayer(n_splits=n_splits)
+    layer = layers.ChannelSplitLayer(n_splits)
 
     inp = np.arange(batch * hw * hw * chans).reshape((batch, hw, hw, chans)).astype(np.float32)
 
@@ -67,3 +67,32 @@ def test_channel_split(call, n_splits, chans=24, hw=5, batch=2):
         assert i.shape == o.shape
         assert np.allclose(i, o), (i, o)
 
+
+@pytest.mark.parametrize("call", [_functional_model_call, _subclass_model_call])
+@pytest.mark.parametrize("ratio", [4, 8])
+def test_spatial_weighting(call, ratio, chans=64, hw=8, batch=2):
+    layer = layers.SpatialWeightingLayer(ratio)
+
+    inp = np.arange(batch * hw * hw * chans).reshape((batch, hw, hw, chans)).astype(np.float32)
+
+    out_t = call(inp, layer)
+    assert out_t.numpy().shape == inp.shape
+
+
+
+@pytest.mark.parametrize("call", [_subclass_model_call])
+@pytest.mark.parametrize("output_hw", [16, 32])
+def test_spatial_weighting(call, output_hw, chans=3, hw=64, batch=2):
+    layer = layers.AdaptiveAveragePooling2D((output_hw, output_hw))
+    inp = np.arange(batch * hw * hw * chans).reshape((batch, hw, hw, chans)).astype(np.float32)
+
+    out_t = call(inp, layer)
+    assert out_t.numpy().shape == (batch, output_hw, output_hw, chans)
+
+    layer = layers.AdaptiveAveragePooling2D((output_hw + 2, output_hw + 2))
+    try:
+        out_t = call(inp, layer)
+    except:
+        pass
+    else:
+        assert False, "AdaptiveAveragePooling2D requires input_size to be divisible on output_size "
