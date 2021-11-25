@@ -7,7 +7,7 @@ class StageSpec:
     num_modules: int
     num_blocks: int
     num_channels_list: List[int]
-
+    naive: bool
 
 @dataclass
 class StemSpec:
@@ -47,9 +47,26 @@ class LiteHrnetConfig:
         return cls(
             stem=StemSpec(),
             stages=[
-                StageSpec(num_modules=2, num_blocks=2, num_channels_list=(40, 80)),
-                StageSpec(num_modules=4, num_blocks=2, num_channels_list=(40, 80, 160)),
-                StageSpec(num_modules=2, num_blocks=2, num_channels_list=(40, 80, 160, 320)),
+                StageSpec(num_modules=2, num_blocks=2, num_channels_list=(40, 80), naive=True),
+                StageSpec(num_modules=4, num_blocks=2, num_channels_list=(40, 80, 160), naive=True),
+                StageSpec(num_modules=2, num_blocks=2, num_channels_list=(40, 80, 160, 320), naive=True),
+            ],
+            name="Naive18",
+            head=head
+        )
+
+    @classmethod
+    def lite18(cls, out_channels=32):
+        """
+        """
+        head = HeadSpec()
+        head.out_channels = out_channels
+        return cls(
+            stem=StemSpec(),
+            stages=[
+                StageSpec(num_modules=2, num_blocks=2, num_channels_list=(40, 80), naive=False),
+                StageSpec(num_modules=4, num_blocks=2, num_channels_list=(40, 80, 160), naive=False),
+                StageSpec(num_modules=2, num_blocks=2, num_channels_list=(40, 80, 160, 320), naive=False),
             ],
             name="Naive18",
             head=head

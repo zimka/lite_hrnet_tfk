@@ -24,10 +24,11 @@ class LiteHrnet(tf.keras.models.Model):
                 num_modules=spec.num_modules,
                 num_blocks=spec.num_blocks,
                 num_channels_list=spec.num_channels_list,
+                naive=spec.naive,
                 name=f"{config.name}.stages.{spec_idx}"
             ))
 
-    def _build_head(self, config):
+    def _build_head(self, config: LiteHrnetConfig):
         assert config.head.version in config.head._HEAD_VERSIONS
         outputs = None
         if config.head.version == 'v0':

@@ -106,16 +106,16 @@ class StageModule(BaseModule):
     Optionally builds transition module in addition to LiteHR*Modules.
     """
     def __init__(self, *, num_modules: int, num_blocks: int, num_channels_list: List[int],
-        with_transition: bool = True, name: str = "StageModule"):
+        with_transition: bool = True, naive: bool = True, name: str = "StageModule"):
         super().__init__(self, name=name)
         self.trans = None
         if with_transition:
             self.trans = TransitionModule(num_channels_list=num_channels_list, name=f"{name}.trans")
         self.lite_mods = []
-
+        _HrModule = LiteNaiveHrModule if naive else LiteHrModule
         for m_idx in range(num_modules):
             self.lite_mods.append(
-                LiteNaiveHrModule(
+                _HrModule(
                     num_blocks=num_blocks,
                     branches_chan_list=num_channels_list,
                     name=f"{name}.lite_mods.{m_idx}"
