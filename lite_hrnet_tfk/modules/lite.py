@@ -19,7 +19,9 @@ class CrossResolutionWeightingModule(BaseModule):
         self.total_channels = sum(channels_list)
         self.pools = None
         self.concat = tfk.layers.Concatenate(name=f"{name}.concat")
-        self.conv1 = tfk.layers.Conv2D(filters=int(self.total_channels/reduce_ratio), kernel_size=1, activation='relu', name=f"{name}.conv1")
+        self.conv1 = tfk.layers.Conv2D(
+            filters=int(self.total_channels/reduce_ratio), kernel_size=1, activation='relu', name=f"{name}.conv1"
+        )
         self.conv2 = tfk.layers.Conv2D(filters=self.total_channels, kernel_size=1, activation='sigmoid', name=f"{name}.conv2")
         self.split = None
         self.ups = None

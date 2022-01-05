@@ -8,12 +8,12 @@ from lite_hrnet_tfk.config import LiteHrnetConfig
 
 
 class LiteHrnet(tfk.models.Model):
-    def __init__(self, *, config: LiteHrnetConfig):
+    def __init__(self, config: LiteHrnetConfig):
         super().__init__()
         self._build_backbone(config)
         self._build_head(config)
 
-    def _build_backbone(self, config):
+    def _build_backbone(self, config: LiteHrnetConfig):
         self.stem = StemModule(
             stem_channels=config.stem.stem_channels,
             out_channels=config.stem.out_channels,

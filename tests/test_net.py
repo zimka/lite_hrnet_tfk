@@ -14,8 +14,26 @@ def test_naive18_api():
     y = net(x)
 
 
+def test_naive30_api():
+    config = LiteHrnetConfig.naive30()
+    net = LiteHrnet(config=config)
+    assert isinstance(net, tf.keras.models.Model)
+
+    x = np.random.random((1, 256, 256, 3))
+    y = net(x)
+
+
 def test_lite18_api():
     config = LiteHrnetConfig.lite18()
+    net = LiteHrnet(config=config)
+    assert isinstance(net, tf.keras.models.Model)
+
+    x = np.random.random((1, 256, 256, 3))
+    y = net(x)
+
+
+def test_lite30_api():
+    config = LiteHrnetConfig.lite30()
     net = LiteHrnet(config=config)
     assert isinstance(net, tf.keras.models.Model)
 

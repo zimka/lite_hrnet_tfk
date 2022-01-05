@@ -14,7 +14,7 @@ from .lite import LiteHrModule
 
 class StemModule(BaseModule):
     """
-    Input module in Lite-HRNet. Reduces HW 4 times.
+    Input module in Lite-HRNet. Reduces HW ("network stride") 4 times.
     https://github.com/HRNet/Lite-HRNet/blob/hrnet/models/backbones/litehrnet.py#L164
     """
     def __init__(self, stem_channels=32, out_channels=32, name="StemModule"):

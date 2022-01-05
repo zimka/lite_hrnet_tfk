@@ -7,7 +7,12 @@ license = "MIT"
 
 [tool.poetry.dependencies]
 python = "^3.7"
-tensorflow = "^2.3"
+tensorflow = { version = "^2.2", optional = true }
+tensorflow-gpu = { version = "^2.2", optional = true }
+
+[tool.poetry.extras]
+tensorflow = ["tensorflow"]
+tensorflow-gpu = ["tensorflow-gpu"]
 
 [tool.poetry.dev-dependencies]
 pytest = "^6.2.5"
@@ -15,8 +20,8 @@ jupyterlab = "^3.2.3"
 pylint = "^2.11.1"
 
 [build-system]
-requires = ["flit_core >=3.2,<4"]
-build-backend = "flit_core.buildapi"
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
 
 [project]
 name = "lite_hrnet_tfk"
