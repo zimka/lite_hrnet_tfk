@@ -1,5 +1,6 @@
 from typing import List
 import tensorflow as tf
+import tensorflow.keras as tfk
 
 from lite_hrnet_tfk.layers import ConvBlockLayer
 from lite_hrnet_tfk.modules import BaseModule
@@ -11,7 +12,7 @@ class HrNetHeadV2(BaseModule):
         self.num_scales = num_scales
         self.out_channels = out_channels
 
-        self.conv = tf.keras.layers.Conv2D(
+        self.conv = tfk.layers.Conv2D(
             filters=out_channels, kernel_size=1,
             strides=1, use_bias=True, name=f"{name}.conv",
             padding='same'
@@ -19,9 +20,9 @@ class HrNetHeadV2(BaseModule):
         self.ups = [lambda x: x]
         for n in range(1, num_scales):
             self.ups.append(
-                tf.keras.layers.UpSampling2D(2**n, interpolation='bilinear', name=f"{name}.ups.{n}")
+                tfk.layers.UpSampling2D(2**n, interpolation='bilinear', name=f"{name}.ups.{n}")
             )
-        self.concat = tf.keras.layers.Concatenate(name=f"{name}.concat")
+        self.concat = tfk.layers.Concatenate(name=f"{name}.concat")
 
     def call(self, inputs: List[tf.Tensor]) -> tf.Tensor:
         x_list = inputs
@@ -39,7 +40,7 @@ class HrNetHeadV1(BaseModule):
         super().__init__(self, name=name)
 
         self.scale_idx = scale_idx
-        self.conv = tf.keras.layers.Conv2D(
+        self.conv = tfk.layers.Conv2D(
             filters=out_channels, kernel_size=1,
             strides=1, use_bias=True, name=f"{name}.conv",
             padding='same'
@@ -72,11 +73,11 @@ class IterativeHead(BaseModule):
         self.ups = []
         for n in range(len(input_shape) - 1):
             self.ups.append(
-                tf.keras.layers.UpSampling2D(2, interpolation='bilinear', name=f"{self.name}.up{n}")
+                tfk.layers.UpSampling2D(2, interpolation='bilinear', name=f"{self.name}.up{n}")
             )
         self.ups.append(lambda x: x)
 
-        self.out = tf.keras.layers.Conv2D(
+        self.out = tfk.layers.Conv2D(
             filters=self.out_channels, kernel_size=1,
             strides=1, use_bias=True, name=f"{self.name}.out",
             padding='same'
@@ -90,7 +91,7 @@ class IterativeHead(BaseModule):
         layers = []
         layers += ConvBlockLayer(filters=None, kernel_size=3, strides=1, name=f"{name}.0", relu=False).layers
         layers += ConvBlockLayer(filters=chan_dst, kernel_size=1, strides=1, name=f"{name}.1", relu=False).layers
-        return tf.keras.models.Sequential(layers, name=name)
+        return tfk.models.Sequential(layers, name=name)
 
     def call(self, inputs: List[tf.Tensor]) -> tf.Tensor:
         """

@@ -4,6 +4,7 @@ Lite (not-naive) version of LiteHRNetModule, which uses weighting.
 from typing import List, Tuple
 
 import tensorflow as tf
+import tensorflow.keras as tfk
 
 from lite_hrnet_tfk.layers import ConvBlockLayer, SpatialWeightingLayer, ShuffleLayer, ChannelSplitLayer, AdaptiveAveragePooling2D
 from .base import BaseModule, FusionModule
@@ -17,9 +18,9 @@ class CrossResolutionWeightingModule(BaseModule):
         super().__init__(name)
         self.total_channels = sum(channels_list)
         self.pools = None
-        self.concat = tf.keras.layers.Concatenate(name=f"{name}.concat")
-        self.conv1 = tf.keras.layers.Conv2D(filters=int(self.total_channels/reduce_ratio), kernel_size=1, activation='relu', name=f"{name}.conv1")
-        self.conv2 = tf.keras.layers.Conv2D(filters=self.total_channels, kernel_size=1, activation='sigmoid', name=f"{name}.conv2")
+        self.concat = tfk.layers.Concatenate(name=f"{name}.concat")
+        self.conv1 = tfk.layers.Conv2D(filters=int(self.total_channels/reduce_ratio), kernel_size=1, activation='relu', name=f"{name}.conv1")
+        self.conv2 = tfk.layers.Conv2D(filters=self.total_channels, kernel_size=1, activation='sigmoid', name=f"{name}.conv2")
         self.split = None
         self.ups = None
 
@@ -32,7 +33,7 @@ class CrossResolutionWeightingModule(BaseModule):
         all_channels = [sh[-1] for sh in input_shape]
         self.split = ChannelSplitLayer(all_channels, name=f'{self.name}.split')
         self.ups = [
-            tf.keras.layers.UpSampling2D((h//minimal_hw[0], w//minimal_hw[1]), name=f'{self.name}.ups.{num}')
+            tfk.layers.UpSampling2D((h//minimal_hw[0], w//minimal_hw[1]), name=f'{self.name}.ups.{num}')
             for num, (_, h, w, _) in enumerate(input_shape)
         ]
         super().build(input_shape)
@@ -85,7 +86,7 @@ class ConditionalChannelWeightingModule(BaseModule):
             for num, _ in enumerate(channels_list)
         ]
         self.concats = [
-            tf.keras.layers.Concatenate(name=f"{self.name}.concats.{num}")
+            tfk.layers.Concatenate(name=f"{self.name}.concats.{num}")
             for num, _ in enumerate(channels_list)
         ]
         self.shuffles = [

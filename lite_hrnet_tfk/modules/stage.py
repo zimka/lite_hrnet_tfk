@@ -4,6 +4,7 @@ Modules for a single stage of Lite-HRNet.
 from typing import List, Tuple
 
 import tensorflow as tf
+import tensorflow.keras as tfk
 
 from lite_hrnet_tfk.layers import ConvBlockLayer, ChannelSplitLayer
 from .base import BaseModule
@@ -30,7 +31,7 @@ class StemModule(BaseModule):
             ConvBlockLayer(filters=None, kernel_size=3, strides=2, name=f"{name}.branch2.1"),
             ConvBlockLayer(filters=out_channels // 2,   kernel_size=1, strides=1, name=f"{name}.branch2.2")
         ]
-        self.concat = tf.keras.layers.Concatenate(name=f"{name}.concat")
+        self.concat = tfk.layers.Concatenate(name=f"{name}.concat")
 
     def call(self, x):
         x = self.conv1(x)
@@ -77,7 +78,7 @@ class TransitionModule(BaseModule):
                 layers = ConvBlockLayer(filters=None, kernel_size=3, strides=strides, name=f"{name}.0", relu=False).layers
                 layers += ConvBlockLayer(filters=chan_dst, kernel_size=1, strides=1, name=f"{name}.1", relu=True).layers
                 transitions.append(
-                    tf.keras.models.Sequential(layers, name=f"{self.name}.{i_dst}")
+                    tfk.models.Sequential(layers, name=f"{self.name}.{i_dst}")
                 )
             else:
                 transitions.append(lambda x: x)

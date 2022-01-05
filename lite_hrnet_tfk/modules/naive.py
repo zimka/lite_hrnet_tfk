@@ -4,6 +4,7 @@ Naive version of LiteHRNetModule, which uses not weighting, but channels shuffle
 from typing import List, Tuple
 
 import tensorflow as tf
+import tensorflow.keras as tfk
 
 from lite_hrnet_tfk.layers import ConvBlockLayer, ShuffleLayer, ChannelSplitLayer
 from .base import BaseModule, FusionModule
@@ -30,7 +31,7 @@ class ShuffleModule(BaseModule):
             ConvBlockLayer(filters=None, kernel_size=3, strides=strides, name=f"{name}.branch2.1"),
             ConvBlockLayer(filters=filters // 2, kernel_size=1, strides=1, name=f"{name}.branch2.2")
         ]
-        self.concat = tf.keras.layers.Concatenate(name=f"{name}.concat")
+        self.concat = tfk.layers.Concatenate(name=f"{name}.concat")
         self.shuffle = ShuffleLayer(n_groups=2, name=f"{name}.shuffle")
 
     def build(self, input_shape: Tuple[int]):

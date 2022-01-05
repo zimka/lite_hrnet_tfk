@@ -5,12 +5,13 @@ from typing import List, Tuple
 
 import numpy as np
 import tensorflow as tf
+import tensorflow.keras as tfk
 
 from lite_hrnet_tfk.layers import ChannelSplitLayer, ConvBlockLayer
 
 # pylint: disable=too-many-ancestors
 
-class BaseModule(tf.keras.models.Model):
+class BaseModule(tfk.models.Model):
     """
     Computes shape after .build() to show it in .summary().
     Inherited modules must call super().build()
@@ -45,7 +46,7 @@ class FusionModule(BaseModule):
         for i_dst, chan_dst in enumerate(branches_chan_list):
             for j_src, chan_src in enumerate(branches_chan_list):
                 self.to_from[i_dst].append(self._fuse_layer(i_dst, j_src, chan_dst, chan_src))
-        self.relu = tf.keras.layers.ReLU()
+        self.relu = tfk.layers.ReLU()
 
     def call(self, inputs: List[tf.Tensor]):
         x_list = inputs
@@ -69,12 +70,12 @@ class FusionModule(BaseModule):
         name = f"{self.name}.to_from.{i_dst}.{j_src}"
         if j_src > i_dst:
             # source feature map is smaller than destination -> upsample source
-            return tf.keras.models.Sequential(
+            return tfk.models.Sequential(
                 ConvBlockLayer(
                     filters=chan_dst, kernel_size=1, strides=1,
                     name=f"{name}.0", relu=False
                 ).layers +
-                [tf.keras.layers.UpSampling2D(2**(j_src - i_dst), interpolation='nearest', name=f"{name}.1")],
+                [tfk.layers.UpSampling2D(2**(j_src - i_dst), interpolation='nearest', name=f"{name}.1")],
                 name=name
             )
         elif j_src < i_dst:
@@ -87,6 +88,6 @@ class FusionModule(BaseModule):
             k = i_dst - j_src - 1
             conv_downsamples += ConvBlockLayer(filters=None, kernel_size=3, strides=2, name=f"{name}.{2*k}", relu=False).layers
             conv_downsamples += ConvBlockLayer(filters=chan_dst, kernel_size=1, strides=1, name=f"{name}.{2*k + 1}", relu=True).layers
-            return tf.keras.models.Sequential(conv_downsamples, name=name)
+            return tfk.models.Sequential(conv_downsamples, name=name)
         else:
             return lambda x: x

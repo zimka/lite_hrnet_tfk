@@ -7,9 +7,10 @@ More complex blocks are defined in modules.
 from typing import Tuple, Union, Iterable
 
 import tensorflow as tf
+import tensorflow.keras as tfk
 
 
-class ShuffleLayer(tf.keras.layers.Layer):
+class ShuffleLayer(tfk.layers.Layer):
     """
     Shuffles channels (last dim) in tensor.
     https://arxiv.org/pdf/1707.01083.pdf
@@ -42,7 +43,7 @@ class ShuffleLayer(tf.keras.layers.Layer):
         return tf.reshape(y, tf.shape(inputs), name=self.name + "_reshape_back")
 
 
-class ChannelSplitLayer(tf.keras.layers.Layer):
+class ChannelSplitLayer(tfk.layers.Layer):
     """
     Splits layer on n_splits_or_sizes chunks of equal size OR
     on len(n_splits_or_sizes)
@@ -65,7 +66,7 @@ class ChannelSplitLayer(tf.keras.layers.Layer):
         return tf.split(inputs, self.n_splits_or_sizes, axis=-1, name=self.name + "_split")
 
 
-class SpatialWeightingLayer(tf.keras.layers.Layer):
+class SpatialWeightingLayer(tfk.layers.Layer):
     """
     https://github.com/HRNet/Lite-HRNet/blob/hrnet/models/backbones/litehrnet.py#L17
     """
@@ -78,9 +79,9 @@ class SpatialWeightingLayer(tf.keras.layers.Layer):
 
     def build(self, input_shape: Tuple[int]):
         channels = input_shape[-1]
-        self.pool = tf.keras.layers.GlobalAveragePooling2D(name=f"{self.name}.pool")
-        self.conv1 = tf.keras.layers.Conv2D(filters=int(channels/self.ratio), kernel_size=1, activation='relu', name=f"{self.name}.conv1")
-        self.conv2 = tf.keras.layers.Conv2D(filters=channels, kernel_size=1, activation='sigmoid', name=f"{self.name}.conv2")
+        self.pool = tfk.layers.GlobalAveragePooling2D(name=f"{self.name}.pool")
+        self.conv1 = tfk.layers.Conv2D(filters=int(channels/self.ratio), kernel_size=1, activation='relu', name=f"{self.name}.conv1")
+        self.conv2 = tfk.layers.Conv2D(filters=channels, kernel_size=1, activation='sigmoid', name=f"{self.name}.conv2")
 
     def call(self, inputs: tf.Tensor) -> tf.Tensor:
         out = self.pool(inputs)
@@ -91,7 +92,7 @@ class SpatialWeightingLayer(tf.keras.layers.Layer):
         return inputs * out
 
 
-class ConvBlockLayer(tf.keras.layers.Layer):
+class ConvBlockLayer(tfk.layers.Layer):
     """
     Common building block - conv, bn, relu.
     """
@@ -100,7 +101,7 @@ class ConvBlockLayer(tf.keras.layers.Layer):
 
         self.layers = []
         if filters is not None:
-            self.layers.append(tf.keras.layers.Conv2D(
+            self.layers.append(tfk.layers.Conv2D(
                 filters=filters,
                 kernel_size=kernel_size,
                 strides=strides,
@@ -109,7 +110,7 @@ class ConvBlockLayer(tf.keras.layers.Layer):
                 name=f"{name}_Conv"
             ))
         else:
-            self.layers.append(tf.keras.layers.DepthwiseConv2D(
+            self.layers.append(tfk.layers.DepthwiseConv2D(
                 kernel_size=kernel_size,
                 strides=strides,
                 padding='same',
@@ -117,9 +118,9 @@ class ConvBlockLayer(tf.keras.layers.Layer):
                 name=f"{name}_DwConv"
             ))
         if use_bn:
-            self.layers.append(tf.keras.layers.BatchNormalization(name=f"{name}_BN"))
+            self.layers.append(tfk.layers.BatchNormalization(name=f"{name}_BN"))
         if relu:
-            self.layers.append(tf.keras.layers.ReLU(name=f"{name}_Relu"))
+            self.layers.append(tfk.layers.ReLU(name=f"{name}_Relu"))
 
     def call(self, inputs: tf.Tensor):
         x = inputs
@@ -128,7 +129,7 @@ class ConvBlockLayer(tf.keras.layers.Layer):
         return x
 
 
-class AdaptiveAveragePooling2D(tf.keras.layers.Layer):
+class AdaptiveAveragePooling2D(tfk.layers.Layer):
     """
     Simplified version of tensorflow_addons AdaptiveAveragePooling implementation.
     https://github.com/tensorflow/addons/blob/v0.15.0/tensorflow_addons/layers/adaptive_pooling.py

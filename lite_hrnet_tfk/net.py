@@ -1,12 +1,13 @@
 import numpy as np
 import tensorflow as tf
+import tensorflow.keras as tfk
 
 from lite_hrnet_tfk.modules import StemModule, LiteNaiveHrModule, TransitionModule, StageModule
 from lite_hrnet_tfk.heads import HrNetHeadV2, HrNetHeadV1, IterativeHead
 from lite_hrnet_tfk.config import LiteHrnetConfig
 
 
-class LiteHrnet(tf.keras.models.Model):
+class LiteHrnet(tfk.models.Model):
     def __init__(self, *, config: LiteHrnetConfig):
         super().__init__()
         self._build_backbone(config)
